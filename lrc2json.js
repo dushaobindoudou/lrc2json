@@ -7,6 +7,7 @@ var lrcDirectoryList = [];
 var desDir = "";
 var sourceDir = "";
 var isWatchDirectory = false;
+var isAddTickList = false;
 
 //判断是否是数组
 var isArray = function(obj){
@@ -163,19 +164,25 @@ var getJson = function(line,tickLs){
 	return totalStr;
 }
 //写入结束标记，做好收尾工作
-var closeJson = function(jsbf,tickList,offset,endChar,endCharLen){
+var closeJson = function(jsbf,tickList,offset,endChar,endCharLen,splitCharLen){
 	var tickStr = "";
 	if(offset <= endCharLen){
 		jsbf.write(endChar,offset,endCharLen,"utf8");
-		offset = offset + endCharLen;
 	}else{
-		tickStr = '"timeList"' + ":[" + tickList.join(",") + "]";
-		var tickByteLen = Buffer.byteLength(tickStr);
-		jsbf.write(tickStr,offset,tickByteLen,"utf8");
-		offset = offset + tickByteLen;
-		jsbf.write(endChar,offset,endCharLen,"utf8");
-		offset = offset + endCharLen;
+		if(isAddTickList){
+			tickStr = '"timeList"' + ":[" + tickList.join(",") + "]";
+			var tickByteLen = Buffer.byteLength(tickStr);
+			jsbf.write(tickStr,offset,tickByteLen,"utf8");
+			offset = offset + tickByteLen;
+			jsbf.write(endChar,offset,endCharLen,"utf8");
+			//offset = offset + endCharLen;
+		}else{
+			offset = offset - splitCharLen;
+			jsbf.write(endChar,offset,endCharLen,"utf8");
+			//offset = offset + endCharLen;
+		}
 	}
+	offset = offset + endCharLen;
 	jsbf.length = offset;
 	return jsbf;
 }
@@ -243,7 +250,7 @@ var processLrc = function(lrcPath,dir){
 		//console.log(data.toString("utf8"));
 	});
 	lrc.on("end",function(){
-		jsbf = closeJson(jsbf,tickList,offset,endChar,endCharLen);
+		jsbf = closeJson(jsbf,tickList,offset,endChar,endCharLen,splitCharLen);
 		json.write(jsbf);
 		json.on("end",function(){
 			logMsg("已经生成了json文件："+dir);
@@ -295,6 +302,11 @@ process.argv.forEach(function (val, index, array) {
 	if(~val.indexOf("-watch")){
 		//开启监控模式
 		isWatchDirectory = true;
+		return;
+	}
+	if(~val.indexOf("-tick_list")){
+		//开启监控模式
+		isAddTickList = true;
 		return;
 	}
 	processLrcArg(val);
