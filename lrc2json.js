@@ -166,22 +166,22 @@ var getJson = function(line,tickLs){
 //写入结束标记，做好收尾工作
 var closeJson = function(jsbf,tickList,offset,endChar,endCharLen,splitCharLen){
 	var tickStr = "";
-	if(offset <= endCharLen){
-		jsbf.write(endChar,offset,endCharLen,"utf8");
-	}else{
+	if(offset > endCharLen){
+		//jsbf.write(endChar,offset,endCharLen,"utf8");
 		if(isAddTickList){
 			tickStr = '"timeList"' + ":[" + tickList.join(",") + "]";
 			var tickByteLen = Buffer.byteLength(tickStr);
 			jsbf.write(tickStr,offset,tickByteLen,"utf8");
 			offset = offset + tickByteLen;
-			jsbf.write(endChar,offset,endCharLen,"utf8");
+			//jsbf.write(endChar,offset,endCharLen,"utf8");
 			//offset = offset + endCharLen;
 		}else{
 			offset = offset - splitCharLen;
-			jsbf.write(endChar,offset,endCharLen,"utf8");
+			//jsbf.write(endChar,offset,endCharLen,"utf8");
 			//offset = offset + endCharLen;
 		}
 	}
+	jsbf.write(endChar,offset,endCharLen,"utf8");
 	offset = offset + endCharLen;
 	jsbf.length = offset;
 	return jsbf;
